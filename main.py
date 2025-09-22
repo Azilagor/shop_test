@@ -12,6 +12,12 @@ def get_db():
     finally:
         db.close()
 
+def get_or_404(query, message="Not found"):
+    obj = query.first()
+    if not obj:
+        raise HTTPException(status_code=404, detail=message)
+    return obj
+
 @app.get("/")
 def root():
     return {"message": "Shop API with SQLAlchemy is running"}
@@ -43,7 +49,9 @@ def create_order(order: schemas.OrderCreate, db: Session = Depends(get_db)):
 
 @app.get("/orders/{order_id}", response_model=schemas.OrderOut)
 def get_order(order_id: int, db: Session = Depends(get_db)):
-    return db.query(models.Order).filter(models.Order.id == order_id).first()
+    order = db.query(models.Order).filter(models.Order.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code = 404, detail="Order not found")
 
 
 @app.post("/orders/add_item")
